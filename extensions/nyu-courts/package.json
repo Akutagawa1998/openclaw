@@ -1,0 +1,9 @@
+{
+  "name": "@openclaw/nyu-courts",
+  "version": "2026.3.23",
+  "private": true,
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.ts"]
+  }
+}

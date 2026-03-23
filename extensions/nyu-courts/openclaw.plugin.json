@@ -1,0 +1,10 @@
+{
+  "id": "nyu-courts",
+  "name": "NYU Courts",
+  "description": "Query NYU basketball court availability (Paulson Courts 1-4 and PAF Main Court).",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
