@@ -1,0 +1,121 @@
+{
+  "id": "security-review",
+  "name": "Security Review",
+  "description": "Independent security review layer — supports Ice Mode (human-approval gating) and Water Mode (SafeCheck agent gating with action bundle permits).",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "securityMode": {
+        "type": "string",
+        "enum": ["ice", "water"],
+        "default": "ice"
+      },
+      "reviewModel": {
+        "type": "string",
+        "default": "claude-sonnet-4-20250514"
+      },
+      "maxReviewTimeoutMs": {
+        "type": "number",
+        "default": 30000
+      },
+      "approvalTimeoutMs": {
+        "type": "number",
+        "default": 300000
+      },
+      "notifyChannel": {
+        "type": "string",
+        "enum": ["telegram", "discord"],
+        "default": "telegram"
+      },
+      "notifyTo": {
+        "type": "string"
+      },
+      "exemptTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": []
+      },
+      "safeReadPatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": ["/home/node/.openclaw/workspace/"]
+      },
+      "blockPathPatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": ["\\.env$", "credentials", "secrets\\.enc", "\\.key$", "\\.pem$"]
+      },
+      "blockEnvPatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "default": ["API_KEY", "TOKEN", "SECRET", "PASSWORD", "PRIVATE"]
+      },
+      "water": {
+        "type": "object",
+        "properties": {
+          "permitTtlMs": {
+            "type": "number",
+            "default": 300000
+          },
+          "safeCheckTimeoutMs": {
+            "type": "number",
+            "default": 45000
+          },
+          "safeCheckModel": {
+            "type": "string",
+            "default": "claude-sonnet-4-20250514"
+          },
+          "maxBundleActions": {
+            "type": "number",
+            "default": 20
+          },
+          "highRiskToolPatterns": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["exec", "bash"]
+          },
+          "highRiskPathPatterns": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["\\.openclaw/skills/", "SKILL\\.md", "openclaw\\.json", "docker-compose", "exec-approvals"]
+          },
+          "allowedDownloadDomains": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      }
+    }
+  },
+  "uiHints": {
+    "enabled": {
+      "label": "Enable Security Review",
+      "help": "Master switch for the security review layer."
+    },
+    "securityMode": {
+      "label": "Security Mode",
+      "help": "ice = human-approval gating, water = SafeCheck agent gating with action bundle permits."
+    },
+    "reviewModel": {
+      "label": "Review Model",
+      "help": "Claude model used for automated risk assessment."
+    },
+    "notifyChannel": {
+      "label": "Notification Channel",
+      "help": "Channel to send risk reports for human approval (Ice Mode)."
+    },
+    "notifyTo": {
+      "label": "Notification Target",
+      "help": "Chat ID or user ID to send risk reports to."
+    },
+    "approvalTimeoutMs": {
+      "label": "Approval Timeout (ms)",
+      "help": "How long to wait for human approval before auto-denying (Ice Mode)."
+    }
+  }
+}
