@@ -1,0 +1,12 @@
+# Real secrets — NEVER commit these
+.env
+openclaw.json
+credentials/
+sessions/
+
+# Only templates and safe files should be tracked:
+# .env.example          (placeholder keys)
+# openclaw.json.template (placeholder token)
+# docker-compose.yml    (uses ${VAR} references)
+# README.md             (documentation)
+# commands/*.md         (Claude Code slash commands)

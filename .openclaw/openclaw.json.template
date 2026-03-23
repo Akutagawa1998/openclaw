@@ -1,0 +1,43 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": 18789,
+    "auth": {
+      "mode": "token",
+      "token": "GENERATE_WITH_openssl_rand_-hex_32"
+    },
+    "reload": { "mode": "hybrid" }
+  },
+  "agents": {
+    "defaults": {
+      "model": "anthropic/claude-sonnet-4-6",
+      "workspace": "/home/node/.openclaw/workspace"
+    }
+  },
+  "session": { "dmScope": "per-channel-peer" },
+  "tools": {
+    "profile": "messaging",
+    "deny": ["group:automation", "group:runtime", "sessions_spawn"],
+    "elevated": { "enabled": false },
+    "exec": { "security": "allowlist", "ask": "off" },
+    "fs": { "workspaceOnly": true }
+  },
+  "logging": { "redactSensitive": "tools" },
+  "plugins": {
+    "enabled": true,
+    "load": {
+      "paths": ["/home/node/.openclaw/plugins"]
+    },
+    "entries": {
+      "security-review": {
+        "enabled": true,
+        "config": {
+          "reviewModel": "claude-sonnet-4-20250514",
+          "notifyChannel": "telegram",
+          "notifyTo": "YOUR_CHAT_ID"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+services:
+  openclaw-gateway:
+    image: openclaw:local
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      # LLM API keys 通过 auth-profiles.json 传递，不在 env 中
+      # Bot tokens 通过 config 传递，env 作为后备
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      SECURITY_REVIEW_API_KEY: ${SECURITY_REVIEW_API_KEY}
+      NOTION_API_TOKEN: ${NOTION_API_TOKEN}
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+      - ${OPENCLAW_SCRIPTS_DIR:-./scripts}:/home/node/.openclaw/scripts:ro
+      # 关键配置文件只读挂载
+      - ${OPENCLAW_CONFIG_DIR}/openclaw.json:/home/node/.openclaw/openclaw.json:ro
+      - ${OPENCLAW_CONFIG_DIR}/exec-approvals.json:/home/node/.openclaw/exec-approvals.json:ro
+      # auth-profiles 只读挂载：bot 无法修改自身凭证
+      - ${OPENCLAW_CONFIG_DIR}/agents/main/agent/auth-profiles.json:/home/node/.openclaw/agents/main/agent/auth-profiles.json:ro
+    ports:
+      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=${OPENCLAW_SECCOMP:-./seccomp-openclaw.json}
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+      - /home/node/.npm:size=128m
+    init: true
+    restart: unless-stopped
+    entrypoint: ["/home/node/.openclaw/scripts/entrypoint-secure.sh"]
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind", "lan",
+        "--port", "18789",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  openclaw-cli:
+    image: openclaw:local
+    network_mode: "service:openclaw-gateway"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=128m
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      BROWSER: echo
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+    depends_on:
+      - openclaw-gateway
