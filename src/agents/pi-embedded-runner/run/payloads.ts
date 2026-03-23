@@ -10,9 +10,11 @@ import {
   formatAssistantErrorText,
   formatRawAssistantErrorForUi,
   getApiErrorPayloadFingerprint,
+  isBillingErrorMessage,
   isRawApiErrorPayload,
   normalizeTextForComparison,
 } from "../../pi-embedded-helpers.js";
+import { buildBillingErrorModelSwitchButtons } from "../../billing-error-buttons.js";
 import type { ToolResultFormat } from "../../pi-embedded-subscribe.js";
 import {
   extractAssistantText,
@@ -114,6 +116,7 @@ export function buildEmbeddedRunPayloads(params: {
   audioAsVoice?: boolean;
   replyToTag?: boolean;
   replyToCurrent?: boolean;
+  channelData?: Record<string, unknown>;
 }> {
   const replyItems: Array<{
     text: string;
@@ -124,6 +127,7 @@ export function buildEmbeddedRunPayloads(params: {
     replyToId?: string;
     replyToTag?: boolean;
     replyToCurrent?: boolean;
+    channelData?: Record<string, unknown>;
   }> = [];
 
   const useMarkdown = params.toolResultFormat === "markdown";
@@ -159,7 +163,20 @@ export function buildEmbeddedRunPayloads(params: {
   const normalizedGenericBillingErrorText = normalizeTextForComparison(BILLING_ERROR_USER_MESSAGE);
   const genericErrorText = "The AI service returned an error. Please try again.";
   if (errorText) {
-    replyItems.push({ text: errorText, isError: true });
+    // When a billing error occurs, attach model-switch options for Telegram/Discord
+    const isBilling = rawErrorMessage ? isBillingErrorMessage(rawErrorMessage) : false;
+    const billingSwitch = isBilling
+      ? buildBillingErrorModelSwitchButtons({
+          cfg: params.config,
+          failedProvider: params.provider,
+        })
+      : undefined;
+    const finalErrorText = billingSwitch ? errorText + billingSwitch.textSuffix : errorText;
+    replyItems.push({
+      text: finalErrorText,
+      isError: true,
+      channelData: billingSwitch?.channelData,
+    });
   }
 
   const inlineToolResults =
@@ -335,6 +352,7 @@ export function buildEmbeddedRunPayloads(params: {
       replyToTag: item.replyToTag,
       replyToCurrent: item.replyToCurrent,
       audioAsVoice: item.audioAsVoice || Boolean(hasAudioAsVoiceTag && item.media?.length),
+      channelData: item.channelData,
     }))
     .filter((p) => {
       if (!hasOutboundReplyContent(p)) {

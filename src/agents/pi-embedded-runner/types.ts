@@ -62,6 +62,8 @@ export type EmbeddedPiRunResult = {
     replyToId?: string;
     isError?: boolean;
     isReasoning?: boolean;
+    /** Channel-specific payload data (e.g. Telegram inline buttons on billing errors). */
+    channelData?: Record<string, unknown>;
   }>;
   meta: EmbeddedPiRunMeta;
   // True if a messaging tool (telegram, whatsapp, discord, slack, sessions_send)
