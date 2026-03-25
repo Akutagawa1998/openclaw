@@ -6,6 +6,12 @@
  * toggle details (<details>), and rich text (bold, italic, code, links, inline math).
  */
 
+/** Strip wrapping backticks from equation expressions (e.g., `` `expr` `` → `expr`). */
+function stripBackticks(s: string): string {
+  const t = s.trim();
+  return t.startsWith("`") && t.endsWith("`") ? t.slice(1, -1) : t;
+}
+
 // ── Rich text types ──────────────────────────────────────────────
 
 interface RichText {
@@ -268,17 +274,33 @@ export function markdownToBlocks(markdown: string): Block[] {
       continue;
     }
 
-    // Block equation $$...$$
-    if (trimmed === "$$") {
-      i++;
-      const exprLines: string[] = [];
-      while (i < lines.length && lines[i].trim() !== "$$") {
-        exprLines.push(lines[i]);
+    // Block equation $$...$$ (multi-line or single-line)
+    // Also handle \$$ variant (escaped dollar signs from some generators)
+    {
+      const eqTrimmed = trimmed.replace(/^\\/, ""); // strip leading backslash
+      // Multi-line: $$ on its own line
+      if (eqTrimmed === "$$") {
         i++;
+        const exprLines: string[] = [];
+        while (i < lines.length) {
+          const closeLine = lines[i].trim().replace(/^\\/, "");
+          if (closeLine === "$$") break;
+          exprLines.push(lines[i]);
+          i++;
+        }
+        blocks.push(equationBlock(stripBackticks(exprLines.join("\n"))));
+        i++; // skip closing $$
+        continue;
       }
-      blocks.push(equationBlock(exprLines.join("\n")));
-      i++; // skip closing $$
-      continue;
+      // Single-line: $$expression$$ or $$`expression`$$ or \$$`expression`\$$
+      const singleEqMatch = eqTrimmed.match(
+        /^\$\$`?(.+?)`?\$(?:\\?\$)$/,
+      );
+      if (singleEqMatch) {
+        blocks.push(equationBlock(singleEqMatch[1]));
+        i++;
+        continue;
+      }
     }
 
     // Image ![caption](url)

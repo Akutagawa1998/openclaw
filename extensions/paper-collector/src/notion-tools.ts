@@ -704,11 +704,26 @@ export function createNotionWritePageTool(params: {
           };
         }
 
-        // Warn (but allow) content with 0 images — some papers have no extractable figures online
+        // Reject content with 0 images — agent must use browser screenshots as fallback
         if (imageCount === 0) {
           logger.warn(
-            `Quality gate: 0 images for page ${pageId} (${blocks.length} blocks) — allowing but warning`,
+            `Quality gate: REJECTED 0 images for page ${pageId} (${blocks.length} blocks)`,
           );
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  `REJECTED: Content has 0 images. Research papers always have figures — you must include them.\n\n` +
+                  `Image extraction fallback steps:\n` +
+                  `1. Try web_fetch the ar5iv HTML page and extract <img> src URLs\n` +
+                  `2. If ar5iv fails or has no images, try arxiv.org/html/{id} for HTML figures\n` +
+                  `3. If both fail, use the browser tool to open the PDF (https://arxiv.org/pdf/{id}) and take screenshots of each figure\n` +
+                  `4. For GitHub repos linked in the paper, check for figures in README or docs/\n\n` +
+                  `After obtaining figure URLs, insert them as ![Figure N: caption](url) in your markdown and call this tool again.`,
+              },
+            ],
+          };
         }
 
         // Validate image URLs — reject if broken or tiny fragments
@@ -883,11 +898,22 @@ export function createNotionCreateChildPageTool(params: {
           };
         }
 
-        // Warn (but allow) child page with 0 images
+        // Reject child page with 0 images — must carry over images from English page
         if (imageCount === 0) {
           logger.warn(
-            `Quality gate: 0 images for child page "${title}" (${blocks.length} blocks) — allowing but warning`,
+            `Quality gate: REJECTED 0 images for child page "${title}" (${blocks.length} blocks)`,
           );
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  `REJECTED: Chinese translation has 0 images. The English page should have figures — copy all image URLs from the English version.\n\n` +
+                  `If the English page also has no images, use the browser tool to screenshot figures from the PDF (https://arxiv.org/pdf/{id}) first.\n\n` +
+                  `Keep all ![Figure N: caption](url) lines with the same URLs, translate only the caption text, then call this tool again.`,
+              },
+            ],
+          };
         }
 
         // Validate image URLs — reject if broken or tiny fragments
