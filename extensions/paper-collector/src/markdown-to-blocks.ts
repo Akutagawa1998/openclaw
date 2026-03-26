@@ -303,6 +303,33 @@ export function markdownToBlocks(markdown: string): Block[] {
       }
     }
 
+    // Fenced code block ```lang ... ```
+    if (trimmed.startsWith("```")) {
+      const lang = trimmed.slice(3).trim() || "plain text";
+      i++;
+      const codeLines: string[] = [];
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing ```
+      const content = codeLines.join("\n");
+      // Notion code block rich_text has a 2000-char limit per segment
+      const segments: RichText[] = [];
+      for (let off = 0; off < content.length; off += 2000) {
+        segments.push({ type: "text", text: { content: content.slice(off, off + 2000) } });
+      }
+      if (segments.length === 0) {
+        segments.push({ type: "text", text: { content: "" } });
+      }
+      blocks.push({
+        object: "block",
+        type: "code",
+        code: { rich_text: segments, language: lang },
+      } as Block);
+      continue;
+    }
+
     // Image ![caption](url)
     const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
     if (imgMatch) {
