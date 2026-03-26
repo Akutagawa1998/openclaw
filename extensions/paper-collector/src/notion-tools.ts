@@ -817,7 +817,9 @@ const NotionCreateChildPageSchema = {
     },
     title: {
       type: "string" as const,
-      description: "Title of the child page.",
+      description:
+        "Title of the child page. MUST be the paper's original English title (e.g. 'Machine Unlearning'). " +
+        "Do NOT use generic names like '中文翻译' or 'Chinese Translation'.",
     },
     icon: {
       type: "string" as const,
@@ -846,7 +848,8 @@ export function createNotionCreateChildPageTool(params: {
     label: "Create Child Page in Notion",
     description:
       "Create a Chinese translation sub-page under a Notion page. " +
-      "IMPORTANT: This tool REJECTS content shorter than 40 blocks. " +
+      "IMPORTANT: title MUST be the paper's original English title (NOT '中文翻译'). " +
+      "This tool REJECTS content shorter than 40 blocks. " +
       "The Chinese page must be a FULL translation of the English page — same figures, tables, equations, " +
       "VERBATIM translated abstract and introduction, and ALL references. NOT a short summary.",
     parameters: NotionCreateChildPageSchema,
