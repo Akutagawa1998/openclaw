@@ -6,6 +6,7 @@ import {
   createNotionBatchSaveTool,
   createNotionSetupTool,
   createExtractPageImagesTool,
+  createExtractPaperFiguresTool,
   createNotionWritePageTool,
   createNotionCreateChildPageTool,
 } from "./src/notion-tools.js";
@@ -31,21 +32,18 @@ const plugin = {
     const notionToken = resolveNotionToken();
 
     if (!notionToken) {
-      logger.warn(
-        "NOTION_API_TOKEN not set — paper-collector tools will fail at runtime",
-      );
+      logger.warn("NOTION_API_TOKEN not set — paper-collector tools will fail at runtime");
     }
 
     api.registerTool(createNotionSavePaperTool({ config, notionToken, logger }));
     api.registerTool(createNotionBatchSaveTool({ config, notionToken, logger }));
     api.registerTool(createNotionSetupTool({ config, notionToken, logger }));
     api.registerTool(createExtractPageImagesTool({ logger }));
+    api.registerTool(createExtractPaperFiguresTool({ logger }));
     api.registerTool(createNotionWritePageTool({ notionToken, logger }));
     api.registerTool(createNotionCreateChildPageTool({ notionToken, logger }));
 
-    logger.info(
-      `Paper collector active: databaseId=${config.databaseId || "(not set)"}`,
-    );
+    logger.info(`Paper collector active: databaseId=${config.databaseId || "(not set)"}`);
   },
 };
 
